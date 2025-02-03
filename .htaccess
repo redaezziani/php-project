@@ -1,0 +1,15 @@
+RewriteEngine On
+RewriteBase /
+
+# Redirect root to products page
+RewriteRule ^$ IHM/Produits/index.php [L]
+
+# Handle API requests
+RewriteRule ^api/([^/]+)$ api/$1.php [L]
+
+# Prevent direct access to certain directories
+RewriteRule ^Acces_BD/ - [F,L]
+RewriteRule ^database/ - [F,L]
+
+# Handle 404 errors
+ErrorDocument 404 /IHM/public/404.php

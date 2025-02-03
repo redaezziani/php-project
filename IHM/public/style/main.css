@@ -1,0 +1,21 @@
+@font-face {
+    font-family: 'MainFont';
+    src: url('../fonts/font.otf') format('opentype');
+}
+
+@font-face {
+    font-family: 'Lantx';
+    src: url('../fonts/LANTX-Regular.otf') format('opentype');
+}
+
+body {
+    font-family: 'Lantx', Arial, sans-serif;
+}
+
+body {
+    direction: rtl;
+    text-align: right;
+}
+.left-to-right {
+    direction: ltr;
+}
