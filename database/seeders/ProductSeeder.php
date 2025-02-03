@@ -71,6 +71,97 @@ function seedProducts() {
                 'nutritional_info' => 'أليسين: 5.6mg، فيتامين C: 31.2mg',
                 'allergens' => 'لا شيء'
             ],
+            [
+                'reference' => generateUniqueReference('VEG', 6),
+                'designation' => 'خس آيسبرج',
+                'description' => 'خس طازج ومقرمش، مثالي للسلطات والساندويتشات',
+                'prix_unitaire' => 8.50,
+                'quantite_stock' => 100,
+                'image' => 'iceberg-lettuce.png',
+                'promotion' => 0,
+                'category_id' => 1,
+                'ingredients' => 'خس آيسبرج طازج',
+                'nutritional_info' => 'فيتامين K: 17.4mg، فيتامين C: 3.9mg',
+                'allergens' => 'لا شيء'
+            ],
+            [
+                'reference' => generateUniqueReference('VEG', 7),
+                'designation' => 'كايل',
+                'description' => 'ورق أخضر غني بالمغذيات، مثالي للسلطات والعصائر',
+                'prix_unitaire' => 15.00,
+                'quantite_stock' => 80,
+                'image' => 'kale.png',
+                'promotion' => 0,
+                'category_id' => 1,
+                'ingredients' => 'كايل طازج',
+                'nutritional_info' => 'فيتامين A: 8.90mg، فيتامين K: 704.8mg',
+                'allergens' => 'لا شيء'
+            ],
+            [
+                'reference' => generateUniqueReference('VEG', 8),
+                'designation' => 'كولرابي',
+                'description' => 'خضار لذيذ من عائلة الملفوف، غني بالألياف',
+                'prix_unitaire' => 10.00,
+                'quantite_stock' => 60,
+                'image' => 'kohlrabi.png',
+                'promotion' => 0,
+                'category_id' => 1,
+                'ingredients' => 'كولرابي طازج',
+                'nutritional_info' => 'فيتامين C: 62mg، الألياف: 4.9g',
+                'allergens' => 'لا شيء'
+            ],
+            [
+                'reference' => generateUniqueReference('VEG', 9),
+                'designation' => 'خس الحملان',
+                'description' => 'خس صغير ولذيذ، مثالي للسلطات الخفيفة',
+                'prix_unitaire' => 12.50,
+                'quantite_stock' => 75,
+                'image' => 'lambs-lettuce.png',
+                'promotion' => 0,
+                'category_id' => 1,
+                'ingredients' => 'خس الحملان طازج',
+                'nutritional_info' => 'فيتامين C: 38.2mg، حديد: 2mg',
+                'allergens' => 'لا شيء'
+            ],
+            [
+                'reference' => generateUniqueReference('VEG', 10),
+                'designation' => 'كراث',
+                'description' => 'خضار عطري من عائلة البصل، يستخدم في الحساء والطبخ',
+                'prix_unitaire' => 9.00,
+                'quantite_stock' => 90,
+                'image' => 'leek.png',
+                'promotion' => 0,
+                'category_id' => 1,
+                'ingredients' => 'كراث طازج',
+                'nutritional_info' => 'فيتامين K: 47μg، فيتامين A: 640IU',
+                'allergens' => 'لا شيء'
+            ],
+            [
+                'reference' => generateUniqueReference('VEG', 11),
+                'designation' => 'خس',
+                'description' => 'خس طازج متعدد الاستخدامات للسلطات والساندويتشات',
+                'prix_unitaire' => 7.50,
+                'quantite_stock' => 120,
+                'image' => 'lettuce.png',
+                'promotion' => 0,
+                'category_id' => 1,
+                'ingredients' => 'خس طازج',
+                'nutritional_info' => 'فيتامين A: 148μg، فيتامين K: 102.3μg',
+                'allergens' => 'لا شيء'
+            ],
+            [
+                'reference' => generateUniqueReference('VEG', 12),
+                'designation' => 'بطاطس',
+                'description' => 'بطاطس طازجة متعددة الاستخدامات للطهي',
+                'prix_unitaire' => 6.00,
+                'quantite_stock' => 200,
+                'image' => 'potatoes.png',
+                'promotion' => 0,
+                'category_id' => 1,
+                'ingredients' => 'بطاطس طازجة',
+                'nutritional_info' => 'فيتامين C: 19.7mg، بوتاسيوم: 421mg',
+                'allergens' => 'لا شيء'
+            ],
         ];
 
         $stmt = $conn->prepare("
@@ -99,3 +190,4 @@ function seedProducts() {
 function generateUniqueReference($prefix, $number) {
     return sprintf('%s%03d', $prefix, $number);
 }
+

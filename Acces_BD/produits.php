@@ -17,6 +17,28 @@ function getProduct($id) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
+/**
+ * Get a single product by its ID
+ * @param int $id Product ID
+ * @return array|null Product data or null if not found
+ */
+function getProductById($id) {
+    $conn = Connect(); // Use Connect() instead of global $connexion
+    
+    try {
+        $query = "SELECT * FROM produits WHERE id = :id LIMIT 1";
+        $stmt = $conn->prepare($query);
+        $stmt->execute(['id' => $id]);
+        
+        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $product ?: null;
+    } catch (PDOException $e) {
+        // Log error if needed
+        error_log("Error retrieving product: " . $e->getMessage());
+        return null;
+    }
+}
+
 function addProduct($data) {
     $conn = Connect();
     $stmt = $conn->prepare("

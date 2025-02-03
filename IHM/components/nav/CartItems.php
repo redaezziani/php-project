@@ -14,7 +14,7 @@ if (!empty($_SESSION['cart'])):
         $subtotal = $price * $quantity;
         $total += $subtotal;
 ?>
-    <div id="cart-item-<?= $productId ?>" class="flex flex-col p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors">
+    <div id="cart-item-<?= $productId ?>" class="flex flex-col p-4  border-b border-gray-200 hover:bg-gray-50 transition-colors">
         <!-- Product Header -->
         <div class="flex gap-4">
             <div class="relative w-24 h-24 border border-amber-300/35 rounded-lg overflow-hidden flex items-center justify-center bg-white p-2">

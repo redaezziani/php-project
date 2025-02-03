@@ -61,100 +61,270 @@
         </div>
 
         <!-- Add to Cart Section -->
-        <div class="flex items-center gap-2 px-2">
-            <div class="flex items-center border border-gray-300 rounded-lg">
-                <button type="button"
-                        onclick="updateProductQuantity(<?= $product['id'] ?>, 'decrease')"
-                        class="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-l-lg transition-colors">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-                    </svg>
-                </button>
-                <input type="number" 
-                       id="product-quantity-<?= $product['id'] ?>"
-                       min="1" 
-                       max="<?= $product['quantite_stock'] ?>" 
-                       value="1"
-                       class="w-16 text-center border-x border-gray-300 py-1 text-gray-700 focus:outline-none focus:ring-1 focus:ring-green-500"
-                       oninput="validateQuantity(this, <?= $product['quantite_stock'] ?>)">
-                <button type="button"
-                        onclick="updateProductQuantity(<?= $product['id'] ?>, 'increase')"
-                        class="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-r-lg transition-colors">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                </button>
-            </div>
+        <div x-data="{
+    quantity: <?= isset($_SESSION['cart'][$product['id']]) ? $_SESSION['cart'][$product['id']] : 1 ?>,
+    inCart: <?= isset($_SESSION['cart'][$product['id']]) ? 'true' : 'false' ?>,
+    isLoading: false,
+    maxStock: <?= $product['quantite_stock'] ?>,
+    
+    async updateCart(action, qty = null) {
+        if (this.isLoading) return;
+        this.isLoading = true;
+        
+        try {
+            const formData = new FormData();
+            formData.append('action', action);
+            formData.append('productId', <?= $product['id'] ?>);
+            if (qty !== null) formData.append('quantity', qty);
             
-            <button onclick="addToCart(<?= $product['id'] ?>)" 
-                    class="flex-1 w-9 bg-amber-100 text-amber-400 border border-amber-500/45 px-4 py-2 rounded-lg hover:bg-green-900 transition-colors 
-                           flex items-center justify-center gap-2">
-                           <svg
-    class="size-5"
-    width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
- <path d="M5.00014 14H18.1359C19.1487 14 19.6551 14 20.0582 13.8112C20.4134 13.6448 20.7118 13.3777 20.9163 13.0432C21.1485 12.6633 21.2044 12.16 21.3163 11.1534L21.9013 5.88835C21.9355 5.58088 21.9525 5.42715 21.9031 5.30816C21.8597 5.20366 21.7821 5.11697 21.683 5.06228C21.5702 5 21.4155 5 21.1062 5H4.50014M2 2H3.24844C3.51306 2 3.64537 2 3.74889 2.05032C3.84002 2.09463 3.91554 2.16557 3.96544 2.25376C4.02212 2.35394 4.03037 2.48599 4.04688 2.7501L4.95312 17.2499C4.96963 17.514 4.97788 17.6461 5.03456 17.7462C5.08446 17.8344 5.15998 17.9054 5.25111 17.9497C5.35463 18 5.48694 18 5.75156 18H19M7.5 21.5H7.51M16.5 21.5H16.51M8 21.5C8 21.7761 7.77614 22 7.5 22C7.22386 22 7 21.7761 7 21.5C7 21.2239 7.22386 21 7.5 21C7.77614 21 8 21.2239 8 21.5ZM17 21.5C17 21.7761 16.7761 22 16.5 22C16.2239 22 16 21.7761 16 21.5C16 21.2239 16.2239 21 16.5 21C16.7761 21 17 21.2239 17 21.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
- </svg>
-            </button>
-        </div>
+            const response = await fetch('/IHM/api/cart.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) throw new Error(data.message);
+            
+            if (data.success) {
+                if (action === 'remove') {
+                    this.inCart = false;
+                    this.quantity = 1;
+                } else {
+                    this.inCart = true;
+                    this.quantity = data.cartContents[<?= $product['id'] ?>] || 1;
+                }
+                
+                // Update cart count in header
+                document.querySelectorAll('.cart-count').forEach(el => {
+                    el.textContent = data.cartCount;
+                });
+                
+                showToast(data.message, 'success');
+            }
+        } catch (error) {
+            console.error('Cart error:', error);
+            showToast(error.message || 'حدث خطأ في السلة', 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+}"
+class="flex items-center gap-2 px-2">
+    <!-- Quantity Controls -->
+    <div class="flex items-center border border-gray-300 rounded-lg">
+        <button type="button"
+                @click="quantity > 1 && updateCart('update', quantity - 1)"
+                :disabled="isLoading || quantity <= 1"
+                class="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-l-lg transition-colors 
+                       disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+            </svg>
+        </button>
+        
+        <input type="number" 
+               x-model.number="quantity"
+               min="1" 
+               max="<?= $product['quantite_stock'] ?>"
+               @change="updateCart('update', quantity)"
+               :disabled="isLoading"
+               class="w-16 text-center border-x border-gray-300 py-1 text-gray-700 
+                      focus:outline-none focus:ring-1 focus:ring-green-500
+                      disabled:opacity-50 disabled:cursor-not-allowed">
+        
+        <button type="button"
+                @click="quantity < maxStock && updateCart('update', quantity + 1)"
+                :disabled="isLoading || quantity >= maxStock"
+                class="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-r-lg transition-colors
+                       disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Add/Remove Button -->
+    <button @click="inCart ? updateCart('remove') : updateCart('add', quantity)"
+            :disabled="isLoading"
+            :class="{'bg-red-500 hover:bg-red-700': inCart,
+                    'bg-green-500 hover:bg-green-700': !inCart}"
+            class="flex-1 text-white px-4 py-2 rounded-lg transition-colors 
+                   flex items-center justify-center gap-2
+                   disabled:opacity-50 disabled:cursor-not-allowed">
+        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path x-show="!inCart" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            <path x-show="inCart" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        <!-- <span x-text="inCart ? (isLoading ? 'جاري الحذف...' : 'إزالة من السلة') : 
+                        (isLoading ? 'جاري الإضافة...' : 'أضف إلى السلة')"></span> -->
+    </button>
+</div>
     </div>
 </div>
 
-<!-- Add this script at the bottom of your page or in a separate JS file -->
 <script>
-function updateProductQuantity(productId, action) {
-    const input = document.getElementById(`product-quantity-${productId}`);
-    const currentQty = parseInt(input.value);
-    const maxQty = parseInt(input.max);
+document.addEventListener('alpine:init', () => {
+    Alpine.data('cartItem', () => ({
+        quantity: <?= isset($_SESSION['cart'][$product['id']]) ? $_SESSION['cart'][$product['id']] : 1 ?>,
+        isLoading: false,
+        inCart: <?= isset($_SESSION['cart'][$product['id']]) ? 'true' : 'false' ?>,
+        maxStock: <?= $product['quantite_stock'] ?>,
+        productId: <?= $product['id'] ?>,
 
-    switch(action) {
-        case 'increase':
-            if (currentQty < maxQty) {
-                input.value = currentQty + 1;
+        updateQuantity(action) {
+            let newQuantity = this.quantity;
+            
+            switch(action) {
+                case 'increase':
+                    if (this.quantity < this.maxStock) newQuantity++;
+                    break;
+                case 'decrease':
+                    if (this.quantity > 1) newQuantity--;
+                    break;
+                case 'input':
+                    newQuantity = Math.min(Math.max(1, this.quantity), this.maxStock);
+                    break;
             }
-            break;
-        case 'decrease':
-            if (currentQty > 1) {
-                input.value = currentQty - 1;
-            }
-            break;
-    }
-}
 
-function validateQuantity(input, maxStock) {
-    let value = parseInt(input.value);
-    if (isNaN(value) || value < 1) {
-        input.value = 1;
-    } else if (value > maxStock) {
-        input.value = maxStock;
-        showToast('عذراً، لا يمكن تجاوز الكمية المتوفرة في المخزون', 'error');
-    }
-}
+            if (newQuantity === this.quantity) return;
+            this.quantity = newQuantity;
 
-function addToCart(productId) {
-    const quantity = parseInt(document.getElementById(`product-quantity-${productId}`).value);
-    
-    $.ajax({
-        url: '/IHM/api/cart.php',
-        method: 'POST',
-        data: {
-            action: 'add',
-            productId: productId,
-            quantity: quantity
-        },
-        success: function(response) {
-            if (response.success) {
-                // Update cart count
-                document.querySelectorAll('.cart-count').forEach(el => {
-                    el.textContent = response.cartCount;
-                });
-                showToast('تمت إضافة المنتج إلى السلة', 'success');
-            } else {
-                showToast(response.message || 'حدث خطأ ما', 'error');
+            if (this.inCart) {
+                this.updateCartQuantity(newQuantity);
             }
         },
-        error: function() {
-            showToast('حدث خطأ في الاتصال', 'error');
+
+        updateCartQuantity(quantity) {
+            if (this.isLoading) return;
+            this.isLoading = true;
+
+            fetch('/IHM/api/cart.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'update',
+                    productId: this.productId,
+                    quantity: quantity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.querySelectorAll('.cart-count').forEach(el => {
+                        el.textContent = data.cartCount;
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('حدث خطأ في تحديث السلة', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+        },
+
+        removeFromCart() {
+            if (this.isLoading) return;
+            this.isLoading = true;
+
+            fetch('/IHM/api/cart.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: 'remove',
+                    productId: this.productId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.inCart = false;
+                    this.quantity = 1;
+                    document.querySelectorAll('.cart-count').forEach(el => {
+                        el.textContent = data.cartCount;
+                    });
+                    showToast('تم إزالة المنتج من السلة', 'success');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('حدث خطأ في إزالة المنتج', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
+        },
+
+        addToCart() {
+            if (this.isLoading) return;
+            this.isLoading = true;
+
+            const data = new URLSearchParams({
+                action: 'add',
+                productId: this.productId,
+                quantity: this.quantity
+            });
+
+            fetch('/IHM/api/cart.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: data,
+                credentials: 'same-origin'
+            })
+            .then(async response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new TypeError("Expected JSON response");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    this.inCart = true;
+                    document.querySelectorAll('.cart-count').forEach(el => {
+                        el.textContent = data.cartCount;
+                    });
+                    showToast('تمت إضافة المنتج إلى السلة', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to add to cart');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast(error.message || 'حدث خطأ في الاتصال', 'error');
+            })
+            .finally(() => {
+                this.isLoading = false;
+            });
         }
-    });
+    }));
+});
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-4 right-4 p-4 rounded-lg text-white ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    } shadow-lg z-50 transition-opacity duration-300`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    // Fade out and remove after 3 seconds
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 </script>
