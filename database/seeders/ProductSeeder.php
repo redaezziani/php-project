@@ -5,9 +5,11 @@ function seedProducts() {
     $conn = Connect();
     
     try {
+        $conn->exec("SET FOREIGN_KEY_CHECKS=0");
+        $conn->exec("TRUNCATE TABLE produits");
+        
         $products = [
             [
-                'reference' => generateUniqueReference('VEG', 1),
                 'designation' => 'الشمندر',
                 'description' => 'الشمندر هو خضار جذري غني بالفيتامينات والمعادن، يُستخدم في السلطات والعصائر وله فوائد صحية عديدة.',
                 'prix_unitaire' => 6.50,
@@ -20,7 +22,6 @@ function seedProducts() {
                 'allergens' => 'لا شيء'
             ],
             [
-                'reference' => generateUniqueReference('VEG', 2),
                 'designation' => 'البروكلي',
                 'description' => 'البروكلي خضار غني بمضادات الأكسدة والفيتامينات، مثالي للطهي بالبخار أو إضافته إلى السلطات والأطباق الصحية.',
                 'prix_unitaire' => 10.00,
@@ -33,7 +34,6 @@ function seedProducts() {
                 'allergens' => 'لا شيء'
             ],
             [
-                'reference' => generateUniqueReference('VEG', 3),
                 'designation' => 'الهليون',
                 'description' => 'الهليون نبات مغذي ذو نكهة مميزة، يحتوي على الألياف والفيتامينات، ويستخدم في السلطات والمأكولات المشوية.',
                 'prix_unitaire' => 15.00,
@@ -46,7 +46,6 @@ function seedProducts() {
                 'allergens' => 'لا شيء'
             ],
             [
-                'reference' => generateUniqueReference('VEG', 4),
                 'designation' => 'الجزر',
                 'description' => 'الجزر خضار حلو ومقرمش، غني بالبيتا كاروتين الذي يتحول إلى فيتامين A، مفيد لصحة العين والجهاز المناعي.',
                 'prix_unitaire' => 5.00,
@@ -59,7 +58,6 @@ function seedProducts() {
                 'allergens' => 'لا شيء'
             ],
             [
-                'reference' => generateUniqueReference('VEG', 5),
                 'designation' => 'الثوم',
                 'description' => 'الثوم معروف بفوائده الصحية، حيث يمتلك خصائص مضادة للبكتيريا ويُستخدم في العديد من الأطباق لإضافة نكهة غنية.',
                 'prix_unitaire' => 12.00,
@@ -72,7 +70,6 @@ function seedProducts() {
                 'allergens' => 'لا شيء'
             ],
             [
-                'reference' => generateUniqueReference('VEG', 6),
                 'designation' => 'خس آيسبرج',
                 'description' => 'خس طازج ومقرمش، مثالي للسلطات والساندويتشات',
                 'prix_unitaire' => 8.50,
@@ -85,7 +82,6 @@ function seedProducts() {
                 'allergens' => 'لا شيء'
             ],
             [
-                'reference' => generateUniqueReference('VEG', 7),
                 'designation' => 'كايل',
                 'description' => 'ورق أخضر غني بالمغذيات، مثالي للسلطات والعصائر',
                 'prix_unitaire' => 15.00,
@@ -98,7 +94,6 @@ function seedProducts() {
                 'allergens' => 'لا شيء'
             ],
             [
-                'reference' => generateUniqueReference('VEG', 8),
                 'designation' => 'كولرابي',
                 'description' => 'خضار لذيذ من عائلة الملفوف، غني بالألياف',
                 'prix_unitaire' => 10.00,
@@ -111,7 +106,6 @@ function seedProducts() {
                 'allergens' => 'لا شيء'
             ],
             [
-                'reference' => generateUniqueReference('VEG', 9),
                 'designation' => 'خس الحملان',
                 'description' => 'خس صغير ولذيذ، مثالي للسلطات الخفيفة',
                 'prix_unitaire' => 12.50,
@@ -124,7 +118,6 @@ function seedProducts() {
                 'allergens' => 'لا شيء'
             ],
             [
-                'reference' => generateUniqueReference('VEG', 10),
                 'designation' => 'كراث',
                 'description' => 'خضار عطري من عائلة البصل، يستخدم في الحساء والطبخ',
                 'prix_unitaire' => 9.00,
@@ -137,7 +130,6 @@ function seedProducts() {
                 'allergens' => 'لا شيء'
             ],
             [
-                'reference' => generateUniqueReference('VEG', 11),
                 'designation' => 'خس',
                 'description' => 'خس طازج متعدد الاستخدامات للسلطات والساندويتشات',
                 'prix_unitaire' => 7.50,
@@ -150,7 +142,6 @@ function seedProducts() {
                 'allergens' => 'لا شيء'
             ],
             [
-                'reference' => generateUniqueReference('VEG', 12),
                 'designation' => 'بطاطس',
                 'description' => 'بطاطس طازجة متعددة الاستخدامات للطهي',
                 'prix_unitaire' => 6.00,
@@ -177,17 +168,32 @@ function seedProducts() {
         ");
 
         foreach ($products as $product) {
+            $product['reference'] = generateProductReference('VEG');
             $stmt->execute($product);
         }
 
+        $conn->exec("SET FOREIGN_KEY_CHECKS=1");
+
         echo "Products seeded successfully!\n";
     } catch (PDOException $e) {
+        $conn->exec("SET FOREIGN_KEY_CHECKS=1");
         throw new Exception("Error seeding products: " . $e->getMessage());
     }
 }
 
-// Helper function to generate unique reference
-function generateUniqueReference($prefix, $number) {
-    return sprintf('%s%03d', $prefix, $number);
+function generateProductReference($prefix) {
+    // Generate UUID v4
+    $uuid = bin2hex(random_bytes(16));
+    $uuid = sprintf(
+        '%08s-%04s-%04x-%04x-%12s',
+        substr($uuid, 0, 8),
+        substr($uuid, 8, 4),
+        (hexdec(substr($uuid, 12, 4)) & 0x0fff) | 0x4000,
+        (hexdec(substr($uuid, 16, 4)) & 0x3fff) | 0x8000,
+        substr($uuid, 20, 12)
+    );
+    
+    // Format: VEG-xxxxxxxx (first 8 chars of UUID)
+    return sprintf('%s-%s', $prefix, substr($uuid, 0, 8));
 }
 

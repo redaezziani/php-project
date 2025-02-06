@@ -1,71 +1,56 @@
 <?php
 
 function Connect() {
-    if (!extension_loaded('pdo_sqlite')) {
-        die("Error: PDO SQLite driver is not installed. Please install php-sqlite3");
-    }
-
-    $env = parse_ini_file(__DIR__ . '/.env');
-    $dbPath = __DIR__ . '/' . $env['DB_PATH'];
+    $dotenv = parse_ini_file(__DIR__ . '/.env');
     
     try {
-        // Create database directory if it doesn't exist
-        $dbDir = dirname($dbPath);
-        if (!is_dir($dbDir)) {
-            mkdir($dbDir, 0777, true);
-        }
-
+        $dsn = sprintf(
+            "mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4",
+            $dotenv['SERVEUR'],
+            $dotenv['DB_PORT'],
+            $dotenv['DB_NAME']
+        );
+        
         $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false
+            PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
         ];
         
-        $conn = new PDO("sqlite:{$dbPath}", null, null, $options);
-        
-        // Enable foreign keys
-        $conn->exec('PRAGMA foreign_keys = ON');
-        
-        return $conn;
-    } catch(PDOException $e) {
-        die("Connection failed: " . $e->getMessage() . 
-            "<br>Please check if: <br>" .
-            "1. SQLite is installed<br>" .
-            "2. Database directory is writable<br>" .
-            "3. Database file path is correct: {$dbPath}<br>");
+        return new PDO($dsn, $dotenv['UTILISATEUR'], $dotenv['PASSWORD'], $options);
+    } catch (PDOException $e) {
+        throw new Exception("Connection failed: " . $e->getMessage());
     }
 }
 
-// Initialize database if it doesn't exist
 function initializeDatabase() {
-    $env = parse_ini_file(__DIR__ . '/.env');
-    $dbPath = __DIR__ . '/' . $env['DB_PATH'];
-    $schemaPath = __DIR__ . '/../database/schema.sqlite.sql';
-    
-    $conn = Connect();
+    $dotenv = parse_ini_file(__DIR__ . '/.env');
+    $schemaPath = __DIR__ . '/../database/schema.mysql.sql';
     
     try {
-        // Begin transaction
-        $conn->beginTransaction();
+        // Create database if it doesn't exist
+        $pdo = new PDO(
+            "mysql:host={$dotenv['SERVEUR']};port={$dotenv['DB_PORT']}",
+            $dotenv['UTILISATEUR'],
+            $dotenv['PASSWORD']
+        );
+        
+        $pdo->exec("CREATE DATABASE IF NOT EXISTS {$dotenv['DB_NAME']} 
+                    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        
+        // Connect to the database
+        $conn = Connect();
         
         // Read and execute schema file
         if (file_exists($schemaPath)) {
             $schema = file_get_contents($schemaPath);
-            $statements = explode(';', $schema);
-            
-            foreach($statements as $statement) {
-                if (trim($statement) != '') {
-                    $conn->exec($statement);
-                }
-            }
+            $conn->exec($schema);
+            return true;
         }
         
-        // Commit transaction
-        $conn->commit();
-        return true;
+        throw new Exception("Schema file not found");
     } catch (PDOException $e) {
-        // Rollback on error
-        $conn->rollBack();
-        die("Failed to initialize database: " . $e->getMessage());
+        throw new Exception("Failed to initialize database: " . $e->getMessage());
     }
 }
